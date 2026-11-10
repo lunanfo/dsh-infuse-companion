@@ -1,0 +1,12 @@
+# macOS / editor noise
+.DS_Store
+*.log
+
+# dependencies (none required, kept for safety)
+node_modules/
+
+# helper binary is built from bin/infuse-ax.swift on first use
+bin/infuse-ax
+
+# local scratch
+.tmp/

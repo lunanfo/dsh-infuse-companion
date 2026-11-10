@@ -1,0 +1,11 @@
+# Workspace bundle for the Infuse Companion plugin.
+- insert:
+    - id: infuse-companion
+      name: '@local/dsh-infuse-companion'
+      config:
+        enabled: true
+        pauseOnTurnComplete: true
+        pauseOnApprovalNeeded: true
+        pauseOnQuestionAsked: true
+        onlyRootSessions: true
+        cooldownSeconds: 3

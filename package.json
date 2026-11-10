@@ -1,0 +1,32 @@
+{
+  "name": "@local/dsh-infuse-companion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Automatically pause Infuse playback when an AI session completes or needs your review, with a left-sidebar Infuse controller and rule panel.",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.png"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "bin/infuse-ax",
+    "bin/infuse-ax.swift",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.png",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}
