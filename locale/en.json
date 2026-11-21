@@ -69,5 +69,10 @@
   "error.infuse-not-running": "Infuse is not currently running.",
   "error.ax-not-trusted": "Accessibility permission is required to trigger Infuse's Play/Pause menu item.",
   "error.menu-unavailable": "Infuse's Play/Pause menu item is currently unavailable; make sure a video is open.",
-  "error.internal": "Operation failed"
+  "error.internal": "Operation failed",
+  "rules.turnError.title": "Pause when a turn stops with an error",
+  "rules.turnError.desc": "Also pause when the agent stops on a model or network error and waits for you; off by default.",
+  "reason.turn-error": "AI turn stopped with an error",
+  "rules.goalRounds.title": "Pause during automatic goal rounds",
+  "rules.goalRounds.desc": "Off by default: intermediate goal rounds do not interrupt playback; only the final round pauses. Turn on to pause after every goal round."
 }

@@ -56,6 +56,10 @@ window.__ModuleLoader__.load({
       'rules.enabled.desc': '开启后，当 DSH 需要您查看或操作时自动暂停 Infuse。',
       'rules.turnComplete.title': 'AI 会话回合完成时暂停',
       'rules.turnComplete.desc': '当 AI 完成本轮回复、停下来等待您查看结果时自动暂停。',
+      'rules.goalRounds.title': 'goal 自动续跑时也暂停',
+      'rules.goalRounds.desc': '默认关闭：goal 每个中间轮完成时不打断，只在 goal 结束时暂停；打开后每个 goal round 完成都会暂停。',
+      'rules.turnError.title': '出错停止时也暂停',
+      'rules.turnError.desc': '当回合因模型/网络错误中止、Agent 停下来等待处理时也暂停；默认关闭，只在正常完成时暂停。',
       'rules.approvalNeeded.title': '需要工具或权限审批时暂停',
       'rules.approvalNeeded.desc': '当 AI 请求执行命令、修改文件或计划审批需要您确认时立即暂停。',
       'rules.questionAsked.title': 'AI 向您提问时暂停',
@@ -70,6 +74,7 @@ window.__ModuleLoader__.load({
       'reason.turn-complete': 'AI 会话回合已完成',
       'reason.approval-needed': 'AI 请求工具/权限审批',
       'reason.question-asked': 'AI 向您发起了提问',
+      'reason.turn-error': 'AI 会话出错停止',
       'reason.manual-pause': '手动暂停播放',
       'reason.manual-resume': '手动恢复播放',
       'reason.manual-toggle': '手动切换播放/暂停',
@@ -128,6 +133,10 @@ window.__ModuleLoader__.load({
       'rules.enabled.desc': 'Automatically pause Infuse whenever DSH needs your attention.',
       'rules.turnComplete.title': 'Pause when AI turn completes',
       'rules.turnComplete.desc': 'Pause Infuse when the AI finishes its reply and is ready for you to check.',
+      'rules.goalRounds.title': 'Pause during automatic goal rounds',
+      'rules.goalRounds.desc': 'Off by default: intermediate goal rounds do not interrupt playback; only the final round pauses. Turn on to pause after every goal round.',
+      'rules.turnError.title': 'Pause when a turn stops with an error',
+      'rules.turnError.desc': 'Also pause when the agent stops on a model or network error and waits for you; off by default.',
       'rules.approvalNeeded.title': 'Pause when approval is required',
       'rules.approvalNeeded.desc': 'Pause Infuse immediately when the AI requests tool, file, or plan approval.',
       'rules.questionAsked.title': 'Pause when AI asks a question',
@@ -142,6 +151,7 @@ window.__ModuleLoader__.load({
       'reason.turn-complete': 'AI turn completed',
       'reason.approval-needed': 'Tool or plan approval needed',
       'reason.question-asked': 'AI asked you a question',
+      'reason.turn-error': 'AI turn stopped with an error',
       'reason.manual-pause': 'Manual pause',
       'reason.manual-resume': 'Manual resume',
       'reason.manual-toggle': 'Manual toggle play/pause',
@@ -789,6 +799,16 @@ window.__ModuleLoader__.load({
             desc: t('rules.turnComplete.desc'),
           },
           {
+            key: 'pauseOnGoalRounds',
+            title: t('rules.goalRounds.title'),
+            desc: t('rules.goalRounds.desc'),
+          },
+          {
+            key: 'pauseOnTurnError',
+            title: t('rules.turnError.title'),
+            desc: t('rules.turnError.desc'),
+          },
+          {
             key: 'pauseOnApprovalNeeded',
             title: t('rules.approvalNeeded.title'),
             desc: t('rules.approvalNeeded.desc'),
@@ -1064,11 +1084,19 @@ window.__ModuleLoader__.load({
                       h('div', { className: 'infc-rule-desc' }, row.desc),
                     ),
                     h(SwitchControl, {
-                      checked: Boolean(config[row.key]),
+                      checked:
+                        typeof row.toChecked === 'function'
+                          ? row.toChecked(config)
+                          : Boolean(config[row.key]),
                       disabled: busy || (row.key !== 'enabled' && !config.enabled),
                       label: row.title,
                       onChange: (nextVal) =>
-                        runAction('configure', { config: { [row.key]: nextVal } }),
+                        runAction('configure', {
+                          config:
+                            typeof row.toPatch === 'function'
+                              ? row.toPatch(nextVal)
+                              : { [row.key]: nextVal },
+                        }),
                     }),
                   ),
                 ),

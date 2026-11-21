@@ -8,10 +8,11 @@
 
 - **左侧栏入口 + 主面板**：实时显示当前剧集/电影、播放进度（按本地时钟逐秒平滑推进）、PID、辅助功能与菜单项状态。
 - **三种自动暂停时机**（可独立开关）：
-  - AI 会话回合完成时（`turn/end`）
+  - AI 会话回合完成时（`turn/end`；可选「出错停止时也暂停」）
   - 需要工具/权限/计划审批时（`approval/request`、`user-questions/request` 的 approval/plan-review intent）
   - AI 调用 `ask_user_question` 向你提问时
-- **仅主会话**：默认忽略后台子代理的回合结束，避免看剧被打断。
+- **仅主会话**：默认忽略后台子代理的回合结束；所有主代理会话的回合完成都会暂停。
+- **Goal 模式感知**：默认在 goal 自动续跑（active + armed）的中间回合跳过暂停，只在 goal 结束/暂停/被 block/达到 round 上限时暂停；想要每个 goal round 都暂停，打开面板里的「goal 自动续跑时也暂停」或设 `pauseOnGoalRounds: true`。
 - **安全暂停**：暂停前先读取 Infuse 本地 Now Playing 状态，只有 `state === "playing"` 才触发；不会把已暂停的视频误触为播放，也不会抢占窗口焦点。
 - **一键恢复**：自动暂停后，面板顶部出现横幅，看完 AI 回复点「看完了，恢复播放」即可继续。
 - **自动暂停记录**：记录每次触发原因、会话标题、暂停位置与时间。
@@ -52,7 +53,10 @@ plugin_manager install_bundle target=github:<your-github-user>/dsh-infuse-compan
   config:
     enabled: true                    # 自动暂停总开关
     pauseOnTurnComplete: true        # AI 回合完成时暂停
+    pauseOnTurnError: false          # 出错停止时也暂停
+    pauseOnGoalRounds: false         # goal 中间轮也暂停（默认关闭）
     pauseOnApprovalNeeded: true      # 需要审批时暂停
+    approvalGraceMs: 800             # 审批等待多久仍无结果才视为需要人工
     pauseOnQuestionAsked: true       # AI 提问时暂停
     onlyRootSessions: true           # 仅主会话，忽略子代理
     cooldownSeconds: 3               # 触发冷却，避免连续暂停
@@ -60,11 +64,37 @@ plugin_manager install_bundle target=github:<your-github-user>/dsh-infuse-compan
 
 ## 工作原理
 
-1. Host 端监听 DSH 事件：`session/event`（`turn/end`，跳过用户手动停止）、`approval/request`、`user-questions/request`。
+1. Host 端只监听持久化的 `session/event` 事件流：回合结束（`turn/end`，仅 `completed`；armed goal 自动续跑期间跳过）、`tool/call`（`ask_user_question` 提问、`exit_plan_mode` 计划审批）、`approval/asked`（0.8 秒后仍未 `approval/decided` 才视为需要人工）。
 2. 触发时先确认 Infuse 正在运行，并通过其本地 Now Playing HTTP 服务（`_infuse-np._tcp` → `/nowplaying`）读取真实播放状态。
 3. 仅当状态为 `playing` 时，调用随插件分发的 Swift 辅助程序 `bin/infuse-ax`，用 macOS 辅助功能（`AXPress`）触发 Infuse 的「播放/暂停」菜单项——不激活窗口、不影响前台操作。
 4. 暂停后等待约 360ms 复核状态，写入记录，并在面板横幅中提示一键恢复。
 5. 面板通过插件自己的受 DSH Web 鉴权保护的 JSON 路由 `/infuse-companion/api` 与 Host 通信。
+
+## 日志与排查
+
+每次自动暂停、跳过和手动操作都会追加到持久日志：
+
+```text
+~/.dsh/plugin-data/infuse-companion/events.jsonl
+```
+
+排查用的诊断日志（事件是否到达、是否被冷却/根会话过滤跳过）：
+
+```text
+~/.dsh/plugin-data/infuse-companion/debug.log
+```
+
+也可以让 Agent 调用工具读取最近记录：
+
+```text
+infuse_companion action=logs limit=20
+```
+
+面板的「触发与控制记录」展示同一份最近记录（内存中保留最近 40 条，重启后从日志恢复）。日志每行是一条 JSON，包含时间、触发原因（`turn-complete` / `approval-needed` / `question-asked` / 手动操作）、会话标题、播放位置和结果（`paused` 等），排查误暂停时直接看 `reason` 与 `sessionTitle` 即可。
+
+- **自动触发但 Infuse 本来就没在播放**（例如别的会话完成时你暂停着）只写入 `debug.log`，不再挤占面板历史。
+- goal 自动续跑期间跳过的回合会以 `turn/goal-continuing-skip` 记录在 `debug.log`。
+- 两个日志文件超过 512 KB 会轮转为 `*.1`，只保留一份旧档。
 
 ## 目录结构
 

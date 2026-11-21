@@ -5,7 +5,10 @@
       config:
         enabled: true
         pauseOnTurnComplete: true
+        pauseOnTurnError: false
+        pauseOnGoalRounds: false
         pauseOnApprovalNeeded: true
+        approvalGraceMs: 800
         pauseOnQuestionAsked: true
         onlyRootSessions: true
         cooldownSeconds: 3

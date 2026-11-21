@@ -69,5 +69,10 @@
   "error.infuse-not-running": "未检测到正在运行的 Infuse 应用。",
   "error.ax-not-trusted": "当前未授予辅助功能（Accessibility）权限，无法触发菜单暂停。",
   "error.menu-unavailable": "Infuse 的「播放/暂停」菜单项当前不可用，请确认已打开视频。",
-  "error.internal": "操作执行失败"
+  "error.internal": "操作执行失败",
+  "rules.turnError.title": "出错停止时也暂停",
+  "rules.turnError.desc": "当回合因模型/网络错误中止、Agent 停下来等待处理时也暂停；默认关闭，只在正常完成时暂停。",
+  "reason.turn-error": "AI 会话出错停止",
+  "rules.goalRounds.title": "goal 自动续跑时也暂停",
+  "rules.goalRounds.desc": "默认关闭：goal 每个中间轮完成时不打断，只在 goal 结束时暂停；打开后每个 goal round 完成都会暂停。"
 }
